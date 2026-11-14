@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0d162a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Med Tracker">
+  <title>Medication tracker</title>
+  <style>
+    :root { color-scheme: dark; font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", Inter, sans-serif; background:#0a1020; color:#f3f6ff; }
+    * { box-sizing:border-box; }
+    body { margin:0; min-height:100dvh; background: radial-gradient(circle at 90% -10%, #24395c 0, transparent 42%), #0a1020; }
+    main { max-width:570px; margin:auto; padding: max(25px, env(safe-area-inset-top)) 20px max(38px, env(safe-area-inset-bottom)); }
+    header { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:28px; }
+    h1 { font-size:30px; margin:5px 0; letter-spacing:-1.1px; } .eyebrow { color:#91a5c7; font-size:12px; font-weight:700; letter-spacing:1.7px; text-transform:uppercase; }
+    .today { color:#bfcee6; font-size:13px; text-align:right; }
+    .pill { display:inline-flex; align-items:center; gap:7px; background:#1a2840; padding:8px 12px; border-radius:999px; font-size:12px; color:#c9d8fa; }
+    .dot { width:7px; height:7px; background:#75dda9; border-radius:50%; }
+    .hero { border:1px solid #35496a; background:linear-gradient(145deg,#253f66,#15263d); border-radius:24px; padding:24px; margin-bottom:18px; }
+    .hero.warn { background:linear-gradient(145deg,#574221,#35271d); border-color:#80633a; }
+    .hero h2 { font-size:14px; font-weight:600; margin:0 0 8px; color:#c8dcf5; }
+    .hero-number { font-size:56px; font-weight:750; letter-spacing:-3px; line-height:1.08; }
+    .hero-number span { font-size:19px; font-weight:500; letter-spacing:0; color:#c3d6ed; }
+    .hero-sub { margin:13px 0 0; color:#d6e3f7; font-size:14px; line-height:1.5; }
+    .grid { display:grid; grid-template-columns:1fr 1fr; gap:13px; margin-bottom:26px; }
+    .med { background:#162239; border:1px solid #2a3951; border-radius:22px; padding:19px 16px; min-width:0; }
+    .med h3 { margin:0 0 14px; font-size:15px; font-weight:700; }
+    .count { font-size:41px; font-weight:750; letter-spacing:-1.8px; line-height:1; }
+    .unit { font-size:12px; color:#b5c4d9; margin-top:5px; }
+    .track { background:#34445c; height:7px; border-radius:999px; margin:18px 0 10px; overflow:hidden; }
+    .fill { height:100%; border-radius:999px; width:0%; background:#83d7ff; transition:width 250ms ease; }
+    .med:nth-child(2) .fill { background:#c5a6ff; }
+    .detail { font-size:12px; color:#b8c8e1; line-height:1.4; }
+    section.form { background:#111d31; border:1px solid #2a3951; border-radius:23px; padding:20px; }
+    section.form h2 { font-size:18px; margin:0 0 4px; } .hint { color:#a8bbd6; font-size:13px; line-height:1.5; margin:0 0 19px; }
+    label { display:block; font-size:13px; font-weight:650; color:#d7e4f7; margin:14px 0 8px; }
+    input[type="date"] { display:block; width:100%; padding:14px 13px; min-height:50px; border:1px solid #435672; border-radius:13px; color:#f4f8ff; background:#20314a; font:inherit; font-size:16px; color-scheme:dark; }
+    .checkline { display:flex; align-items:center; gap:10px; color:#c1d2e7; font-size:13px; font-weight:400; margin:15px 0; }
+    input[type="checkbox"] { width:19px; height:19px; accent-color:#7fbaff; flex:none; }
+    button { width:100%; min-height:50px; border:0; border-radius:13px; padding:13px; font:inherit; font-weight:700; font-size:15px; cursor:pointer; }
+    .primary { background:#8bbcff; color:#0b1b31; margin-top:16px; }
+    .secondary { color:#d6e5fc; background:#273b58; margin-top:10px; border:1px solid #46617d; }
+    .status { min-height:21px; margin-top:12px; font-size:13px; line-height:1.5; color:#b7d7fa; }
+    footer { color:#8296b4; font-size:12px; line-height:1.6; padding:22px 4px 0; }
+    [hidden] { display:none !important; }
+    @media (max-width:360px) { .count {font-size:34px;} .med {padding:15px 12px;} .hero-number {font-size:48px;} }
+  </style>
+</head>
+<body>
+<main>
+  <header><div><div class="eyebrow">Your daily overview</div><h1>Medication tracker</h1></div><div class="today" id="today"></div></header>
+  <div class="pill"><span class="dot"></span> On-device date tracking</div>
+  <div style="height:17px"></div>
+  <section class="hero" id="hero" aria-live="polite">
+    <h2>Next prescription request</h2>
+    <div class="hero-number" id="requestCount">—</div>
+    <p class="hero-sub" id="requestDetail">Enter your most recent approval date to begin.</p>
+  </section>
+  <div class="grid">
+    <article class="med"><h3>Elvanse <span style="color:#9cb4d0;font-weight:400">50mg</span></h3><div class="count" id="elvanseCount">—</div><div class="unit">days remaining</div><div class="track"><div class="fill" id="elvanseBar"></div></div><div class="detail" id="elvanseDetail">28 capsules · 1 daily</div></article>
+    <article class="med"><h3>Amfexa <span style="color:#9cb4d0;font-weight:400">20mg</span></h3><div class="count" id="amfexaCount">—</div><div class="unit">days remaining</div><div class="track"><div class="fill" id="amfexaBar"></div></div><div class="detail" id="amfexaDetail">60 tablets · 2 daily</div></article>
+  </div>
+  <section class="form">
+    <h2>Prescription details</h2><p class="hint">Save the dates once, then open this page whenever you need a quick check.</p>
+    <label for="approval">Most recent prescription approval / issue date</label>
+    <input type="date" id="approval" required>
+    <label class="checkline" for="sameDay"><input type="checkbox" id="sameDay" checked> I started this supply on the same day</label>
+    <div id="startWrap" hidden><label for="start">Date you started the new supply</label><input type="date" id="start"></div>
+    <button class="primary" id="save" type="button">Save dates</button>
+    <button class="secondary" id="sync" type="button">Update Scriptable widget</button>
+    <div class="status" id="status" role="status" aria-live="polite"></div>
+  </section>
+  <footer>Calculated from a 28-day Elvanse supply, 30-day Amfexa supply and a 21-day request interval. Counts include today's planned dose. Actual stock may differ if doses are missed, changed, or taken from older stock. The widget updates on iOS's schedule, so opening this page gives the freshest calculation.</footer>
+</main>
+<script>
+(() => {
+  'use strict';
+  const KEY = 'medication-tracker-v1';
+  const $ = id => document.getElementById(id);
+  const fmt = new Intl.DateTimeFormat('en-GB', {day:'numeric', month:'short', year:'numeric'});
+  const fmtWeekday = new Intl.DateTimeFormat('en-GB', {weekday:'short', day:'numeric', month:'short'});
+  // UTC-based calendar-day arithmetic avoids daylight-saving 23/25-hour days.
+  function dayNumber(iso) { const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(iso||''); if(!m)return NaN; const [y,mo,d]=m.slice(1).map(Number); const ms=Date.UTC(y,mo-1,d); const date=new Date(ms); return date.getUTCFullYear()===y&&date.getUTCMonth()===mo-1&&date.getUTCDate()===d ? ms/86400000 : NaN; }
+  function isoFromDay(n) { return new Date(n*86400000).toISOString().slice(0,10); }
+  function todayISO() { const d=new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+  function showDate(iso) { return fmt.format(new Date(iso+'T12:00:00')); }
+  function remaining(supply, start, today) { return Math.max(0, supply - Math.max(0,today-start)); }
+  function read() { try { const d=JSON.parse(localStorage.getItem(KEY)||'null'); return d && Number.isFinite(dayNumber(d.approval)) && Number.isFinite(dayNumber(d.start)) ? d : null; } catch { return null; } }
+  function render() {
+    const today=dayNumber(todayISO()); $('today').textContent=fmtWeekday.format(new Date());
+    const data=read(); $('hero').classList.remove('warn');
+    if(!data) { $('requestCount').textContent='—'; $('requestDetail').textContent='Enter your most recent approval date to begin.'; ['elvanse','amfexa'].forEach(k=>{$(k+'Count').textContent='—'; $(k+'Bar').style.width='0%';}); return; }
+    const approval=dayNumber(data.approval), start=dayNumber(data.start), eligible=approval+21, until=eligible-today;
+    $('requestCount').innerHTML=until>0?`${until} <span>${until===1?'day to go':'days to go'}</span>`:'Ready <span>to request</span>';
+    $('requestDetail').textContent=until>0?`You can request both medications from ${showDate(isoFromDay(eligible))}.`:`Eligible since ${showDate(isoFromDay(eligible))}. Check with your prescriber before requesting.`;
+    if(until<=0) $('hero').classList.add('warn');
+    for(const [name,supply,perDay,unit] of [['elvanse',28,1,'capsules'],['amfexa',30,2,'tablets']]) {
+      const left=remaining(supply,start,today);
+      $(name+'Count').textContent=left;
+      $(name+'Bar').style.width=`${100*left/supply}%`;
+      $(name+'Detail').textContent=`≈ ${left*perDay} ${unit} · ${left===0?'supply estimated empty':`through ${showDate(isoFromDay(Math.max(today,start)+left-1))}`}`;
+    }
+  }
+  function setMessage(s) { $('status').textContent=s; }
+  $('sameDay').addEventListener('change',()=>{ $('startWrap').hidden=$('sameDay').checked; if($('sameDay').checked) $('start').value=$('approval').value; });
+  $('approval').addEventListener('change',()=>{ if($('sameDay').checked) $('start').value=$('approval').value; });
+  $('save').addEventListener('click',()=>{
+    const approval=$('approval').value, start=$('sameDay').checked?approval:$('start').value;
+    if(!Number.isFinite(dayNumber(approval))||!Number.isFinite(dayNumber(start))) {setMessage('Please enter valid dates in both fields.');return;}
+    if(dayNumber(start)>dayNumber(todayISO())) {setMessage('The supply start date cannot be in the future for this tracker.');return;}
+    if(dayNumber(approval)>dayNumber(todayISO())) {setMessage('The approval date cannot be in the future.');return;}
+    if(dayNumber(start)<dayNumber(approval)) {setMessage('The supply start date must not be before the approval date.');return;}
+    try {localStorage.setItem(KEY,JSON.stringify({approval,start}));setMessage('Dates saved on this device. Tap “Update Scriptable widget” to sync the widget.');render();}
+    catch {setMessage('Could not save. Check that website storage is enabled.');}
+  });
+  $('sync').addEventListener('click',()=>{
+    const data=read(); if(!data){setMessage('Save your dates first.');return;}
+    const params=new URLSearchParams({approval:data.approval,start:data.start});
+    // Scriptable reads args.queryParameters and writes to its own local store.
+    window.location.href='scriptable:///run/MedicationTracker?'+params.toString();
+    setMessage('Opening Scriptable to update the widget. Return here when complete.');
+  });
+  const existing=read();
+  if(existing){$('approval').value=existing.approval;$('start').value=existing.start;$('sameDay').checked=existing.approval===existing.start;$('startWrap').hidden=$('sameDay').checked;}
+  window.addEventListener('pageshow',render);
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden)render();});
+  render();
+})();
+</script>
+</body>
+</html>
